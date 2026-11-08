@@ -1,0 +1,23 @@
+Security Log Parser
+Input: data/sample_login.log
+Valid events: 8
+Successful logins: 2
+Failed logins: 6
+Failures by user:
+  alex-demo: 1
+  blair-demo: 2
+  casey-demo: 0
+  sentinel-demo: 3
+Failures by source:
+  training-laptop-01: 1
+  training-laptop-02: 2
+  training-laptop-04: 2
+  training-laptop-05: 1
+Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
+  ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
+Malformed lines skipped: 2
+warning: line 10: expected 4 fields, found 1
+warning: line 11: status must be SUCCESS or FAILURE
+JSON: results/analysis.json
+User CSV: results/user_summary.csv
+Source CSV: results/source_failure_summary.csv

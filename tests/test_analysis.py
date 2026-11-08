@@ -47,7 +47,42 @@ class AnalysisTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             detect_repeated_failures([], 3, 0)
 
+    def test_source_failures_combine_multiple_users(self) -> None:
+        result = analyse_events(
+            [
+                event(0, user="alex-demo"),
+                event(1, user="river-demo"),
+            ],
+            3,
+            10,
+        )
+        self.assertEqual(
+            [{"source": "lab-pc-01", "failed_logins": 2}], result["sources"]
+        )
+
+    def test_source_summary_excludes_successes(self) -> None:
+        result = analyse_events(
+            [
+                event(0, "SUCCESS"),
+                LoginEvent(
+                    datetime(2026, 8, 1, 10, 1, tzinfo=timezone.utc),
+                    "river-demo",
+                    "SUCCESS",
+                    "success-only-source",
+                ),
+                event(2),
+            ],
+            3,
+            10,
+        )
+        self.assertEqual(
+            [{"source": "lab-pc-01", "failed_logins": 1}], result["sources"]
+        )
+
+    def test_source_summary_is_empty_when_there_are_no_failures(self) -> None:
+        result = analyse_events([event(0, "SUCCESS")], 3, 10)
+        self.assertEqual([], result["sources"])
+
 
 if __name__ == "__main__":
     unittest.main()
-

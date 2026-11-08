@@ -48,3 +48,12 @@ def export_csv(result: dict[str, object], output_path: Path) -> None:
                 }
             )
 
+
+def export_source_csv(result: dict[str, object], output_path: Path) -> None:
+    """Write one row for each source that has at least one failed login."""
+    fieldnames = ["source", "failed_logins"]
+    with output_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in result["sources"]:  # type: ignore[assignment]
+            writer.writerow(row)

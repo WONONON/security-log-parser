@@ -1,0 +1,27 @@
+Security Log Parser
+Input: data/empty_login.log
+Valid events: 0
+Successful logins: 0
+Failed logins: 0
+Failures by user:
+  none
+Failures by source:
+  none
+Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
+  none
+Malformed lines skipped: 0
+JSON: evidence/source-failure-summary/no-failure-results/analysis.json
+User CSV: evidence/source-failure-summary/no-failure-results/user_summary.csv
+Source CSV: evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
+$ cat evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
+source,failed_logins
+$ selected JSON source data
+{
+  "summary": {
+    "valid_events": 0,
+    "successful_logins": 0,
+    "failed_logins": 0,
+    "users_with_repeated_failures": 0
+  },
+  "sources": []
+}

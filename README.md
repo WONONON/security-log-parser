@@ -1,6 +1,6 @@
 # Security Log Parser
 
-Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
+Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user and per source, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
 
 Student: Dongwoo Won  
 Student ID: 25623683  
@@ -65,17 +65,36 @@ Failures by user:
   blair-demo: 2
   casey-demo: 0
   sentinel-demo: 3
+Failures by source:
+  training-laptop-01: 1
+  training-laptop-02: 2
+  training-laptop-04: 2
+  training-laptop-05: 1
 Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
   ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
 Malformed lines skipped: 2
 JSON: results/analysis.json
-CSV: results/user_summary.csv
+User CSV: results/user_summary.csv
+Source CSV: results/source_failure_summary.csv
 ```
 
 Two warnings for lines 10 and 11 are printed to standard error. The command creates:
 
-- `results/analysis.json`, containing configuration, overall counts, user counts, alerts, and malformed-line details
+- `results/analysis.json`, containing configuration, overall counts, user counts, source failure counts, alerts, and malformed-line details
 - `results/user_summary.csv`, containing one row per user
+- `results/source_failure_summary.csv`, containing one row per source with at least one failed login
+
+The source report counts only `FAILURE` records. Successful logins do not increase a source count, and a source that has no failures is omitted. If the input has no failures, the source CSV contains only its header row.
+
+Example source CSV:
+
+```csv
+source,failed_logins
+training-laptop-01,1
+training-laptop-02,2
+training-laptop-04,2
+training-laptop-05,1
+```
 
 ## Test the project
 
@@ -83,7 +102,7 @@ Two warnings for lines 10 and 11 are printed to standard error. The command crea
 python3 -m unittest discover -s tests -v
 ```
 
-The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, and invalid configuration.
+The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, invalid configuration, one source shared by multiple users, exclusion of successful logins from source counts, and an input with no failures.
 
 Expected final line:
 
@@ -133,7 +152,8 @@ These commands support a transparent workflow. They do not claim that the studen
 | `python3 --version` | Confirm the interpreter version. |
 | `python3 -m unittest discover -s tests -v` | Run all unit tests with test names. |
 | `python3 -m security_log_parser ...` | Run the application as a Python module. |
-| `cat results/user_summary.csv` | Inspect the CSV report. |
+| `cat results/user_summary.csv` | Inspect the per-user CSV report. |
+| `cat results/source_failure_summary.csv` | Inspect the per-source failure CSV report. |
 | `diff expected.json results/analysis.json` | Compare two files when debugging. |
 | `echo $?` | Show the previous command's exit status in a POSIX shell. |
 
@@ -146,7 +166,7 @@ git init
 git status
 git add README.md security_log_parser tests data pyproject.toml .gitignore
 git commit -m "Add initial security log parser"
-git switch -c feature/source-summary
+git switch -c feature/source-failure-summary
 # Make and test one student-authored change.
 git diff
 git add security_log_parser tests README.md
@@ -183,7 +203,7 @@ For an interactive inspection, add a temporary breakpoint such as `breakpoint()`
 
 - The tool processes a local text file in memory and is not designed for large or continuous log streams.
 - It recognises one CSV schema and two status values; it does not parse operating-system or vendor-specific formats.
-- Detection is per user. It does not combine activity by source, IP address, device, or account group.
+- Source reporting is a simple count. It does not apply a time window, distinguish unique users, or produce source-based alerts.
 - It reports the first qualifying window per user, not every overlapping window.
 - It does not verify whether timestamps are trustworthy or normalise user aliases.
 - The alert is a learning example, not proof of an attack and not a replacement for a monitored security platform.
@@ -207,7 +227,7 @@ Security-Log-Parser/
 These tasks are intentionally not completed. They allow Dongwoo to create genuine personal evidence and Git history.
 
 1. Add a `--status-case-sensitive` option. Write tests for both default and strict behavior, then explain the usability and compatibility trade-off.
-2. Add a per-source failure summary to the JSON and CSV reports. Develop the change on a Git branch and include a test for one source used by two users.
+2. Completed on `feature/source-failure-summary`: per-source failures are included in JSON and a separate CSV, with tests for shared sources, success exclusion and no-failure input.
 3. Add a `--redact-usernames` option that replaces usernames with stable SHA-256-based aliases. Explain why hashing alone may still allow guessing and why a protected salt would matter for real data.
 
 ## Comprehension questions
@@ -225,4 +245,4 @@ These tasks are intentionally not completed. They allow Dongwoo to create genuin
 
 ## AI contribution disclosure
 
-OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code, or personally performed the recorded AI-run commands.
+OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Codex also implemented modification exercise 2 on `feature/source-failure-summary`, ran its tests and example, and prepared the related evidence and report update. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code or modification exercise 2, or personally performed the recorded AI-run commands.
