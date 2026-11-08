@@ -1,0 +1,45 @@
+$ cat results/user_summary.csv
+user,successful_logins,failed_logins,repeated_failure_detected,window_start,window_end
+alex-demo,1,1,False,,
+blair-demo,0,2,False,,
+casey-demo,1,0,False,,
+sentinel-demo,0,3,True,2026-08-01T09:10:00+10:00,2026-08-01T09:20:00+10:00
+
+$ selected JSON fields
+{
+  "configuration": {
+    "threshold": 3,
+    "window_minutes": 10,
+    "boundary_rule": "inclusive"
+  },
+  "summary": {
+    "valid_events": 8,
+    "successful_logins": 2,
+    "failed_logins": 6,
+    "users_with_repeated_failures": 1
+  },
+  "alerts": [
+    {
+      "user": "sentinel-demo",
+      "failure_count": 3,
+      "window_start": "2026-08-01T09:10:00+10:00",
+      "window_end": "2026-08-01T09:20:00+10:00",
+      "sources": [
+        "training-laptop-04",
+        "training-laptop-05"
+      ]
+    }
+  ],
+  "malformed_lines": [
+    {
+      "line_number": 10,
+      "message": "expected 4 fields, found 1",
+      "content": "this-is-not-a-valid-log-line"
+    },
+    {
+      "line_number": 11,
+      "message": "status must be SUCCESS or FAILURE",
+      "content": "2026-08-01T09:30:00+10:00,casey-demo,UNKNOWN,training-laptop-03"
+    }
+  ]
+}

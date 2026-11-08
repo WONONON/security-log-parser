@@ -1,0 +1,12 @@
+timestamp,user,status,source
+2026-08-01T09:00:00+10:00,alex-demo,SUCCESS,training-laptop-01
+2026-08-01T09:02:00+10:00,blair-demo,FAILURE,training-laptop-02
+2026-08-01T09:03:00+10:00,casey-demo,SUCCESS,training-laptop-03
+2026-08-01T09:10:00+10:00,sentinel-demo,FAILURE,training-laptop-04
+2026-08-01T09:15:00+10:00,sentinel-demo,FAILURE,training-laptop-04
+2026-08-01T09:20:00+10:00,sentinel-demo,FAILURE,training-laptop-05
+2026-08-01T09:21:00+10:00,blair-demo,FAILURE,training-laptop-02
+2026-08-01T09:25:00+10:00,alex-demo,FAILURE,training-laptop-01
+this-is-not-a-valid-log-line
+2026-08-01T09:30:00+10:00,casey-demo,UNKNOWN,training-laptop-03
+

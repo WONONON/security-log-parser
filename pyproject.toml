@@ -1,0 +1,8 @@
+[project]
+name = "security-log-parser"
+version = "1.0.0"
+description = "Small standard-library CLI for fictional login-log analysis"
+requires-python = ">=3.9"
+
+[tool.unittest]
+start-directory = "tests"
