@@ -1,0 +1,762 @@
+commit 26b5588b9d0041f607cc1aed8c362621f7911ba5
+Author: WONONON
+AuthorDate: 2026-11-08T21:32:07+11:00
+Committer: WONONON
+CommitDate: 2026-11-08T21:32:07+11:00
+
+    Add source failure summary exports
+
+
+diff --git a/README.md b/README.md
+index fec6a62..7126112 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Security Log Parser
+ 
+-Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
++Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user and per source, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
+ 
+ Student: Dongwoo Won  
+ Student ID: 25623683  
+@@ -65,17 +65,36 @@ Failures by user:
+   blair-demo: 2
+   casey-demo: 0
+   sentinel-demo: 3
++Failures by source:
++  training-laptop-01: 1
++  training-laptop-02: 2
++  training-laptop-04: 2
++  training-laptop-05: 1
+ Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
+   ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
+ Malformed lines skipped: 2
+ JSON: results/analysis.json
+-CSV: results/user_summary.csv
++User CSV: results/user_summary.csv
++Source CSV: results/source_failure_summary.csv
+ ```
+ 
+ Two warnings for lines 10 and 11 are printed to standard error. The command creates:
+ 
+-- `results/analysis.json`, containing configuration, overall counts, user counts, alerts, and malformed-line details
++- `results/analysis.json`, containing configuration, overall counts, user counts, source failure counts, alerts, and malformed-line details
+ - `results/user_summary.csv`, containing one row per user
++- `results/source_failure_summary.csv`, containing one row per source with at least one failed login
++
++The source report counts only `FAILURE` records. Successful logins do not increase a source count, and a source that has no failures is omitted. If the input has no failures, the source CSV contains only its header row.
++
++Example source CSV:
++
++```csv
++source,failed_logins
++training-laptop-01,1
++training-laptop-02,2
++training-laptop-04,2
++training-laptop-05,1
++```
+ 
+ ## Test the project
+ 
+@@ -83,7 +102,7 @@ Two warnings for lines 10 and 11 are printed to standard error. The command crea
+ python3 -m unittest discover -s tests -v
+ ```
+ 
+-The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, and invalid configuration.
++The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, invalid configuration, one source shared by multiple users, exclusion of successful logins from source counts, and an input with no failures.
+ 
+ Expected final line:
+ 
+@@ -133,7 +152,8 @@ These commands support a transparent workflow. They do not claim that the studen
+ | `python3 --version` | Confirm the interpreter version. |
+ | `python3 -m unittest discover -s tests -v` | Run all unit tests with test names. |
+ | `python3 -m security_log_parser ...` | Run the application as a Python module. |
+-| `cat results/user_summary.csv` | Inspect the CSV report. |
++| `cat results/user_summary.csv` | Inspect the per-user CSV report. |
++| `cat results/source_failure_summary.csv` | Inspect the per-source failure CSV report. |
+ | `diff expected.json results/analysis.json` | Compare two files when debugging. |
+ | `echo $?` | Show the previous command's exit status in a POSIX shell. |
+ 
+@@ -146,7 +166,7 @@ git init
+ git status
+ git add README.md security_log_parser tests data pyproject.toml .gitignore
+ git commit -m "Add initial security log parser"
+-git switch -c feature/source-summary
++git switch -c feature/source-failure-summary
+ # Make and test one student-authored change.
+ git diff
+ git add security_log_parser tests README.md
+@@ -183,7 +203,7 @@ For an interactive inspection, add a temporary breakpoint such as `breakpoint()`
+ 
+ - The tool processes a local text file in memory and is not designed for large or continuous log streams.
+ - It recognises one CSV schema and two status values; it does not parse operating-system or vendor-specific formats.
+-- Detection is per user. It does not combine activity by source, IP address, device, or account group.
++- Source reporting is a simple count. It does not apply a time window, distinguish unique users, or produce source-based alerts.
+ - It reports the first qualifying window per user, not every overlapping window.
+ - It does not verify whether timestamps are trustworthy or normalise user aliases.
+ - The alert is a learning example, not proof of an attack and not a replacement for a monitored security platform.
+@@ -207,7 +227,7 @@ Security-Log-Parser/
+ These tasks are intentionally not completed. They allow Dongwoo to create genuine personal evidence and Git history.
+ 
+ 1. Add a `--status-case-sensitive` option. Write tests for both default and strict behavior, then explain the usability and compatibility trade-off.
+-2. Add a per-source failure summary to the JSON and CSV reports. Develop the change on a Git branch and include a test for one source used by two users.
++2. Completed on `feature/source-failure-summary`: per-source failures are included in JSON and a separate CSV, with tests for shared sources, success exclusion and no-failure input.
+ 3. Add a `--redact-usernames` option that replaces usernames with stable SHA-256-based aliases. Explain why hashing alone may still allow guessing and why a protected salt would matter for real data.
+ 
+ ## Comprehension questions
+@@ -225,4 +245,4 @@ These tasks are intentionally not completed. They allow Dongwoo to create genuin
+ 
+ ## AI contribution disclosure
+ 
+-OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code, or personally performed the recorded AI-run commands.
++OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Codex also implemented modification exercise 2 on `feature/source-failure-summary`, ran its tests and example, and prepared the related evidence and report update. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code or modification exercise 2, or personally performed the recorded AI-run commands.
+diff --git a/evidence/EVIDENCE_INDEX.md b/evidence/EVIDENCE_INDEX.md
+index f8f0000..3f7fc1d 100644
+--- a/evidence/EVIDENCE_INDEX.md
++++ b/evidence/EVIDENCE_INDEX.md
+@@ -20,6 +20,7 @@ The separate Software Development Tools module guide was not supplied. Module-sp
+ | Numbered captures | `evidence/screenshots/` | Visual evidence derived from the recorded command runs |
+ | Instructions | `README.md` | Setup, commands, expected output, Git workflow, limitations and safe data handling |
+ | Portfolio report | `report/` | Goal 3 linkage, results, limitations, disclosure and reflection prompts |
++| Source failure feature evidence | `evidence/source-failure-summary/` | Baseline, branch, diff, tests, execution output, generated reports, screenshots and commit records |
+ 
+ ## Claims deliberately not made
+ 
+@@ -28,4 +29,3 @@ The separate Software Development Tools module guide was not supplied. Module-sp
+ - No 43030 module completion was claimed.
+ - No personal reflection was invented.
+ - No real authentication or personal data was used.
+-
+diff --git a/evidence/source-failure-summary/no-failure-results/analysis.json b/evidence/source-failure-summary/no-failure-results/analysis.json
+new file mode 100644
+index 0000000..ccd5b02
+--- /dev/null
++++ b/evidence/source-failure-summary/no-failure-results/analysis.json
+@@ -0,0 +1,17 @@
++{
++  "configuration": {
++    "threshold": 3,
++    "window_minutes": 10,
++    "boundary_rule": "inclusive"
++  },
++  "summary": {
++    "valid_events": 0,
++    "successful_logins": 0,
++    "failed_logins": 0,
++    "users_with_repeated_failures": 0
++  },
++  "users": [],
++  "sources": [],
++  "alerts": [],
++  "malformed_lines": []
++}
+diff --git a/evidence/source-failure-summary/no-failure-results/source_failure_summary.csv b/evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
+new file mode 100644
+index 0000000..26ae79f
+--- /dev/null
++++ b/evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
+@@ -0,0 +1 @@
++source,failed_logins
+diff --git a/evidence/source-failure-summary/no-failure-results/user_summary.csv b/evidence/source-failure-summary/no-failure-results/user_summary.csv
+new file mode 100644
+index 0000000..2519bd6
+--- /dev/null
++++ b/evidence/source-failure-summary/no-failure-results/user_summary.csv
+@@ -0,0 +1 @@
++user,successful_logins,failed_logins,repeated_failure_detected,window_start,window_end
+diff --git a/evidence/source-failure-summary/raw/branch-start.txt b/evidence/source-failure-summary/raw/branch-start.txt
+new file mode 100644
+index 0000000..7946083
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/branch-start.txt
+@@ -0,0 +1,8 @@
++$ git status --short --branch
++## feature/source-failure-summary
++?? evidence/source-failure-summary/raw/branch-start.txt
++$ git log -1 --format=%h%n%ad%n%an%n%s --date=iso-strict
++77a6d8b
++2026-11-08T21:30:28+11:00
++WONONON
++Record verified baseline before source summary
+diff --git a/evidence/source-failure-summary/raw/example-run.txt b/evidence/source-failure-summary/raw/example-run.txt
+new file mode 100644
+index 0000000..56fc63a
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/example-run.txt
+@@ -0,0 +1,23 @@
++Security Log Parser
++Input: data/sample_login.log
++Valid events: 8
++Successful logins: 2
++Failed logins: 6
++Failures by user:
++  alex-demo: 1
++  blair-demo: 2
++  casey-demo: 0
++  sentinel-demo: 3
++Failures by source:
++  training-laptop-01: 1
++  training-laptop-02: 2
++  training-laptop-04: 2
++  training-laptop-05: 1
++Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
++  ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
++Malformed lines skipped: 2
++warning: line 10: expected 4 fields, found 1
++warning: line 11: status must be SUCCESS or FAILURE
++JSON: results/analysis.json
++User CSV: results/user_summary.csv
++Source CSV: results/source_failure_summary.csv
+diff --git a/evidence/source-failure-summary/raw/final-tests.txt b/evidence/source-failure-summary/raw/final-tests.txt
+new file mode 100644
+index 0000000..6d20fcb
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/final-tests.txt
+@@ -0,0 +1,23 @@
++test_below_threshold_is_not_detected (test_analysis.AnalysisTests) ... ok
++test_counts_success_and_failure_by_user (test_analysis.AnalysisTests) ... ok
++test_exact_time_boundary_is_inclusive (test_analysis.AnalysisTests) ... ok
++test_invalid_configuration_is_rejected (test_analysis.AnalysisTests) ... ok
++test_just_outside_time_boundary_is_excluded (test_analysis.AnalysisTests) ... ok
++test_out_of_order_events_are_sorted (test_analysis.AnalysisTests) ... ok
++test_source_failures_combine_multiple_users (test_analysis.AnalysisTests) ... ok
++test_source_summary_excludes_successes (test_analysis.AnalysisTests) ... ok
++test_source_summary_is_empty_when_there_are_no_failures (test_analysis.AnalysisTests) ... ok
++test_threshold_is_detected (test_analysis.AnalysisTests) ... ok
++test_exports_json_and_csv (test_cli.CliTests) ... ok
++test_missing_input_returns_error_code (test_cli.CliTests) ... ok
++test_no_failures_creates_source_csv_with_header_only (test_cli.CliTests) ... ok
++test_empty_input (test_parser.ParserTests) ... ok
++test_malformed_lines_are_skipped_and_reported (test_parser.ParserTests) ... ok
++test_missing_file_raises_file_not_found (test_parser.ParserTests) ... ok
++test_naive_timestamp_is_rejected (test_parser.ParserTests) ... ok
++test_normal_input (test_parser.ParserTests) ... ok
++
++----------------------------------------------------------------------
++Ran 18 tests in 0.006s
++
++OK
+diff --git a/evidence/source-failure-summary/raw/no-failure-run.txt b/evidence/source-failure-summary/raw/no-failure-run.txt
+new file mode 100644
+index 0000000..461ae63
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/no-failure-run.txt
+@@ -0,0 +1,27 @@
++Security Log Parser
++Input: data/empty_login.log
++Valid events: 0
++Successful logins: 0
++Failed logins: 0
++Failures by user:
++  none
++Failures by source:
++  none
++Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
++  none
++Malformed lines skipped: 0
++JSON: evidence/source-failure-summary/no-failure-results/analysis.json
++User CSV: evidence/source-failure-summary/no-failure-results/user_summary.csv
++Source CSV: evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
++$ cat evidence/source-failure-summary/no-failure-results/source_failure_summary.csv
++source,failed_logins
++$ selected JSON source data
++{
++  "summary": {
++    "valid_events": 0,
++    "successful_logins": 0,
++    "failed_logins": 0,
++    "users_with_repeated_failures": 0
++  },
++  "sources": []
++}
+diff --git a/evidence/source-failure-summary/raw/pre-commit-diff.patch b/evidence/source-failure-summary/raw/pre-commit-diff.patch
+new file mode 100644
+index 0000000..34bdbd6
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/pre-commit-diff.patch
+@@ -0,0 +1,274 @@
++diff --git a/README.md b/README.md
++index fec6a62..7126112 100644
++--- a/README.md
+++++ b/README.md
++@@ -1,6 +1,6 @@
++ # Security Log Parser
++ 
++-Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
+++Security Log Parser is a small Python command-line project for UTS 43030 Goal 3 evidence. It reads fictional login events, counts successful and failed logins, reports failures per user and per source, detects repeated failures, and writes JSON and CSV reports. It uses only the Python standard library.
++ 
++ Student: Dongwoo Won  
++ Student ID: 25623683  
++@@ -65,17 +65,36 @@ Failures by user:
++   blair-demo: 2
++   casey-demo: 0
++   sentinel-demo: 3
+++Failures by source:
+++  training-laptop-01: 1
+++  training-laptop-02: 2
+++  training-laptop-04: 2
+++  training-laptop-05: 1
++ Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
++   ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
++ Malformed lines skipped: 2
++ JSON: results/analysis.json
++-CSV: results/user_summary.csv
+++User CSV: results/user_summary.csv
+++Source CSV: results/source_failure_summary.csv
++ ```
++ 
++ Two warnings for lines 10 and 11 are printed to standard error. The command creates:
++ 
++-- `results/analysis.json`, containing configuration, overall counts, user counts, alerts, and malformed-line details
+++- `results/analysis.json`, containing configuration, overall counts, user counts, source failure counts, alerts, and malformed-line details
++ - `results/user_summary.csv`, containing one row per user
+++- `results/source_failure_summary.csv`, containing one row per source with at least one failed login
+++
+++The source report counts only `FAILURE` records. Successful logins do not increase a source count, and a source that has no failures is omitted. If the input has no failures, the source CSV contains only its header row.
+++
+++Example source CSV:
+++
+++```csv
+++source,failed_logins
+++training-laptop-01,1
+++training-laptop-02,2
+++training-laptop-04,2
+++training-laptop-05,1
+++```
++ 
++ ## Test the project
++ 
++@@ -83,7 +102,7 @@ Two warnings for lines 10 and 11 are printed to standard error. The command crea
++ python3 -m unittest discover -s tests -v
++ ```
++ 
++-The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, and invalid configuration.
+++The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, invalid configuration, one source shared by multiple users, exclusion of successful logins from source counts, and an input with no failures.
++ 
++ Expected final line:
++ 
++@@ -133,7 +152,8 @@ These commands support a transparent workflow. They do not claim that the studen
++ | `python3 --version` | Confirm the interpreter version. |
++ | `python3 -m unittest discover -s tests -v` | Run all unit tests with test names. |
++ | `python3 -m security_log_parser ...` | Run the application as a Python module. |
++-| `cat results/user_summary.csv` | Inspect the CSV report. |
+++| `cat results/user_summary.csv` | Inspect the per-user CSV report. |
+++| `cat results/source_failure_summary.csv` | Inspect the per-source failure CSV report. |
++ | `diff expected.json results/analysis.json` | Compare two files when debugging. |
++ | `echo $?` | Show the previous command's exit status in a POSIX shell. |
++ 
++@@ -146,7 +166,7 @@ git init
++ git status
++ git add README.md security_log_parser tests data pyproject.toml .gitignore
++ git commit -m "Add initial security log parser"
++-git switch -c feature/source-summary
+++git switch -c feature/source-failure-summary
++ # Make and test one student-authored change.
++ git diff
++ git add security_log_parser tests README.md
++@@ -183,7 +203,7 @@ For an interactive inspection, add a temporary breakpoint such as `breakpoint()`
++ 
++ - The tool processes a local text file in memory and is not designed for large or continuous log streams.
++ - It recognises one CSV schema and two status values; it does not parse operating-system or vendor-specific formats.
++-- Detection is per user. It does not combine activity by source, IP address, device, or account group.
+++- Source reporting is a simple count. It does not apply a time window, distinguish unique users, or produce source-based alerts.
++ - It reports the first qualifying window per user, not every overlapping window.
++ - It does not verify whether timestamps are trustworthy or normalise user aliases.
++ - The alert is a learning example, not proof of an attack and not a replacement for a monitored security platform.
++@@ -207,7 +227,7 @@ Security-Log-Parser/
++ These tasks are intentionally not completed. They allow Dongwoo to create genuine personal evidence and Git history.
++ 
++ 1. Add a `--status-case-sensitive` option. Write tests for both default and strict behavior, then explain the usability and compatibility trade-off.
++-2. Add a per-source failure summary to the JSON and CSV reports. Develop the change on a Git branch and include a test for one source used by two users.
+++2. Completed on `feature/source-failure-summary`: per-source failures are included in JSON and a separate CSV, with tests for shared sources, success exclusion and no-failure input.
++ 3. Add a `--redact-usernames` option that replaces usernames with stable SHA-256-based aliases. Explain why hashing alone may still allow guessing and why a protected salt would matter for real data.
++ 
++ ## Comprehension questions
++@@ -225,4 +245,4 @@ These tasks are intentionally not completed. They allow Dongwoo to create genuin
++ 
++ ## AI contribution disclosure
++ 
++-OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code, or personally performed the recorded AI-run commands.
+++OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Codex also implemented modification exercise 2 on `feature/source-failure-summary`, ran its tests and example, and prepared the related evidence and report update. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code or modification exercise 2, or personally performed the recorded AI-run commands.
++diff --git a/security_log_parser/analysis.py b/security_log_parser/analysis.py
++index daf1aa0..b2d4b99 100644
++--- a/security_log_parser/analysis.py
+++++ b/security_log_parser/analysis.py
++@@ -54,6 +54,9 @@ def analyse_events(
++     """Build the serialisable analysis result."""
++     successes = Counter(event.user for event in events if event.status == "SUCCESS")
++     failures = Counter(event.user for event in events if event.status == "FAILURE")
+++    failures_by_source = Counter(
+++        event.source for event in events if event.status == "FAILURE"
+++    )
++     users = sorted(successes.keys() | failures.keys())
++     alerts = detect_repeated_failures(events, threshold, window_minutes)
++     alert_by_user = {str(alert["user"]): alert for alert in alerts}
++@@ -79,6 +82,12 @@ def analyse_events(
++             }
++             for user in users
++         ],
+++        "sources": [
+++            {
+++                "source": source,
+++                "failed_logins": failures_by_source[source],
+++            }
+++            for source in sorted(failures_by_source)
+++        ],
++         "alerts": alerts,
++     }
++-
++diff --git a/security_log_parser/cli.py b/security_log_parser/cli.py
++index 10a136e..c8eb2e9 100644
++--- a/security_log_parser/cli.py
+++++ b/security_log_parser/cli.py
++@@ -7,7 +7,7 @@ import sys
++ from pathlib import Path
++ 
++ from .analysis import analyse_events
++-from .exporters import export_csv, export_json
+++from .exporters import export_csv, export_json, export_source_csv
++ from .parser import read_log
++ 
++ 
++@@ -54,8 +54,10 @@ def main(argv: list[str] | None = None) -> int:
++     args.output_dir.mkdir(parents=True, exist_ok=True)
++     json_path = args.output_dir / "analysis.json"
++     csv_path = args.output_dir / "user_summary.csv"
+++    source_csv_path = args.output_dir / "source_failure_summary.csv"
++     export_json(result, warnings, json_path)
++     export_csv(result, csv_path)
+++    export_source_csv(result, source_csv_path)
++ 
++     summary = result["summary"]
++     print("Security Log Parser")
++@@ -70,6 +72,13 @@ def main(argv: list[str] | None = None) -> int:
++             print(f"  {row['user']}: {row['failed_logins']}")
++     else:
++         print("  none")
+++    print("Failures by source:")
+++    sources = result["sources"]
+++    if sources:
+++        for row in sources:
+++            print(f"  {row['source']}: {row['failed_logins']}")
+++    else:
+++        print("  none")
++     print(
++         f"Repeated failures: threshold={args.threshold}, "
++         f"window={args.window_minutes} minutes (inclusive boundary)"
++@@ -89,6 +98,6 @@ def main(argv: list[str] | None = None) -> int:
++             f"warning: line {warning.line_number}: {warning.message}", file=sys.stderr
++         )
++     print(f"JSON: {json_path}")
++-    print(f"CSV: {csv_path}")
+++    print(f"User CSV: {csv_path}")
+++    print(f"Source CSV: {source_csv_path}")
++     return 0
++-
++diff --git a/security_log_parser/exporters.py b/security_log_parser/exporters.py
++index b999e3a..6c240c1 100644
++--- a/security_log_parser/exporters.py
+++++ b/security_log_parser/exporters.py
++@@ -48,3 +48,12 @@ def export_csv(result: dict[str, object], output_path: Path) -> None:
++                 }
++             )
++ 
+++
+++def export_source_csv(result: dict[str, object], output_path: Path) -> None:
+++    """Write one row for each source that has at least one failed login."""
+++    fieldnames = ["source", "failed_logins"]
+++    with output_path.open("w", encoding="utf-8", newline="") as stream:
+++        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+++        writer.writeheader()
+++        for row in result["sources"]:  # type: ignore[assignment]
+++            writer.writerow(row)
++diff --git a/tests/test_analysis.py b/tests/test_analysis.py
++index d51ae14..176014b 100644
++--- a/tests/test_analysis.py
+++++ b/tests/test_analysis.py
++@@ -47,7 +47,42 @@ class AnalysisTests(unittest.TestCase):
++         with self.assertRaises(ValueError):
++             detect_repeated_failures([], 3, 0)
++ 
+++    def test_source_failures_combine_multiple_users(self) -> None:
+++        result = analyse_events(
+++            [
+++                event(0, user="alex-demo"),
+++                event(1, user="river-demo"),
+++            ],
+++            3,
+++            10,
+++        )
+++        self.assertEqual(
+++            [{"source": "lab-pc-01", "failed_logins": 2}], result["sources"]
+++        )
+++
+++    def test_source_summary_excludes_successes(self) -> None:
+++        result = analyse_events(
+++            [
+++                event(0, "SUCCESS"),
+++                LoginEvent(
+++                    datetime(2026, 8, 1, 10, 1, tzinfo=timezone.utc),
+++                    "river-demo",
+++                    "SUCCESS",
+++                    "success-only-source",
+++                ),
+++                event(2),
+++            ],
+++            3,
+++            10,
+++        )
+++        self.assertEqual(
+++            [{"source": "lab-pc-01", "failed_logins": 1}], result["sources"]
+++        )
+++
+++    def test_source_summary_is_empty_when_there_are_no_failures(self) -> None:
+++        result = analyse_events([event(0, "SUCCESS")], 3, 10)
+++        self.assertEqual([], result["sources"])
+++
++ 
++ if __name__ == "__main__":
++     unittest.main()
++-
++diff --git a/tests/test_cli.py b/tests/test_cli.py
++index 3027bb3..1ac7549 100644
++--- a/tests/test_cli.py
+++++ b/tests/test_cli.py
++@@ -31,8 +31,25 @@ class CliTests(unittest.TestCase):
++             self.assertEqual(0, code)
++             self.assertTrue((output / "analysis.json").is_file())
++             self.assertTrue((output / "user_summary.csv").is_file())
+++            self.assertTrue((output / "source_failure_summary.csv").is_file())
+++
+++    def test_no_failures_creates_source_csv_with_header_only(self) -> None:
+++        with tempfile.TemporaryDirectory() as directory:
+++            root = Path(directory)
+++            source = root / "events.log"
+++            source.write_text(
+++                "2026-08-01T10:00:00+00:00,alex-demo,SUCCESS,lab-pc-01\n",
+++                encoding="utf-8",
+++            )
+++            output = root / "results"
+++            with contextlib.redirect_stdout(io.StringIO()):
+++                code = main([str(source), "--output-dir", str(output)])
+++            self.assertEqual(0, code)
+++            self.assertEqual(
+++                "source,failed_logins\n",
+++                (output / "source_failure_summary.csv").read_text(encoding="utf-8"),
+++            )
++ 
++ 
++ if __name__ == "__main__":
++     unittest.main()
++-
+diff --git a/evidence/source-failure-summary/raw/source-output-preview.txt b/evidence/source-failure-summary/raw/source-output-preview.txt
+new file mode 100644
+index 0000000..19976ed
+--- /dev/null
++++ b/evidence/source-failure-summary/raw/source-output-preview.txt
+@@ -0,0 +1,34 @@
++$ cat results/source_failure_summary.csv
++source,failed_logins
++training-laptop-01,1
++training-laptop-02,2
++training-laptop-04,2
++training-laptop-05,1
++
++$ selected JSON source data
++{
++  "summary": {
++    "valid_events": 8,
++    "successful_logins": 2,
++    "failed_logins": 6,
++    "users_with_repeated_failures": 1
++  },
++  "sources": [
++    {
++      "source": "training-laptop-01",
++      "failed_logins": 1
++    },
++    {
++      "source": "training-laptop-02",
++      "failed_logins": 2
++    },
++    {
++      "source": "training-laptop-04",
++      "failed_logins": 2
++    },
++    {
++      "source": "training-laptop-05",
++      "failed_logins": 1
++    }
++  ]
++}
+diff --git a/security_log_parser/analysis.py b/security_log_parser/analysis.py
+index daf1aa0..b2d4b99 100644
+--- a/security_log_parser/analysis.py
++++ b/security_log_parser/analysis.py
+@@ -54,6 +54,9 @@ def analyse_events(
+     """Build the serialisable analysis result."""
+     successes = Counter(event.user for event in events if event.status == "SUCCESS")
+     failures = Counter(event.user for event in events if event.status == "FAILURE")
++    failures_by_source = Counter(
++        event.source for event in events if event.status == "FAILURE"
++    )
+     users = sorted(successes.keys() | failures.keys())
+     alerts = detect_repeated_failures(events, threshold, window_minutes)
+     alert_by_user = {str(alert["user"]): alert for alert in alerts}
+@@ -79,6 +82,12 @@ def analyse_events(
+             }
+             for user in users
+         ],
++        "sources": [
++            {
++                "source": source,
++                "failed_logins": failures_by_source[source],
++            }
++            for source in sorted(failures_by_source)
++        ],
+         "alerts": alerts,
+     }
+-
+diff --git a/security_log_parser/cli.py b/security_log_parser/cli.py
+index 10a136e..c8eb2e9 100644
+--- a/security_log_parser/cli.py
++++ b/security_log_parser/cli.py
+@@ -7,7 +7,7 @@ import sys
+ from pathlib import Path
+ 
+ from .analysis import analyse_events
+-from .exporters import export_csv, export_json
++from .exporters import export_csv, export_json, export_source_csv
+ from .parser import read_log
+ 
+ 
+@@ -54,8 +54,10 @@ def main(argv: list[str] | None = None) -> int:
+     args.output_dir.mkdir(parents=True, exist_ok=True)
+     json_path = args.output_dir / "analysis.json"
+     csv_path = args.output_dir / "user_summary.csv"
++    source_csv_path = args.output_dir / "source_failure_summary.csv"
+     export_json(result, warnings, json_path)
+     export_csv(result, csv_path)
++    export_source_csv(result, source_csv_path)
+ 
+     summary = result["summary"]
+     print("Security Log Parser")
+@@ -70,6 +72,13 @@ def main(argv: list[str] | None = None) -> int:
+             print(f"  {row['user']}: {row['failed_logins']}")
+     else:
+         print("  none")
++    print("Failures by source:")
++    sources = result["sources"]
++    if sources:
++        for row in sources:
++            print(f"  {row['source']}: {row['failed_logins']}")
++    else:
++        print("  none")
+     print(
+         f"Repeated failures: threshold={args.threshold}, "
+         f"window={args.window_minutes} minutes (inclusive boundary)"
+@@ -89,6 +98,6 @@ def main(argv: list[str] | None = None) -> int:
+             f"warning: line {warning.line_number}: {warning.message}", file=sys.stderr
+         )
+     print(f"JSON: {json_path}")
+-    print(f"CSV: {csv_path}")
++    print(f"User CSV: {csv_path}")
++    print(f"Source CSV: {source_csv_path}")
+     return 0
+-
+diff --git a/security_log_parser/exporters.py b/security_log_parser/exporters.py
+index b999e3a..6c240c1 100644
+--- a/security_log_parser/exporters.py
++++ b/security_log_parser/exporters.py
+@@ -48,3 +48,12 @@ def export_csv(result: dict[str, object], output_path: Path) -> None:
+                 }
+             )
+ 
++
++def export_source_csv(result: dict[str, object], output_path: Path) -> None:
++    """Write one row for each source that has at least one failed login."""
++    fieldnames = ["source", "failed_logins"]
++    with output_path.open("w", encoding="utf-8", newline="") as stream:
++        writer = csv.DictWriter(stream, fieldnames=fieldnames)
++        writer.writeheader()
++        for row in result["sources"]:  # type: ignore[assignment]
++            writer.writerow(row)
+diff --git a/tests/test_analysis.py b/tests/test_analysis.py
+index d51ae14..176014b 100644
+--- a/tests/test_analysis.py
++++ b/tests/test_analysis.py
+@@ -47,7 +47,42 @@ class AnalysisTests(unittest.TestCase):
+         with self.assertRaises(ValueError):
+             detect_repeated_failures([], 3, 0)
+ 
++    def test_source_failures_combine_multiple_users(self) -> None:
++        result = analyse_events(
++            [
++                event(0, user="alex-demo"),
++                event(1, user="river-demo"),
++            ],
++            3,
++            10,
++        )
++        self.assertEqual(
++            [{"source": "lab-pc-01", "failed_logins": 2}], result["sources"]
++        )
++
++    def test_source_summary_excludes_successes(self) -> None:
++        result = analyse_events(
++            [
++                event(0, "SUCCESS"),
++                LoginEvent(
++                    datetime(2026, 8, 1, 10, 1, tzinfo=timezone.utc),
++                    "river-demo",
++                    "SUCCESS",
++                    "success-only-source",
++                ),
++                event(2),
++            ],
++            3,
++            10,
++        )
++        self.assertEqual(
++            [{"source": "lab-pc-01", "failed_logins": 1}], result["sources"]
++        )
++
++    def test_source_summary_is_empty_when_there_are_no_failures(self) -> None:
++        result = analyse_events([event(0, "SUCCESS")], 3, 10)
++        self.assertEqual([], result["sources"])
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+-
+diff --git a/tests/test_cli.py b/tests/test_cli.py
+index 3027bb3..1ac7549 100644
+--- a/tests/test_cli.py
++++ b/tests/test_cli.py
+@@ -31,8 +31,25 @@ class CliTests(unittest.TestCase):
+             self.assertEqual(0, code)
+             self.assertTrue((output / "analysis.json").is_file())
+             self.assertTrue((output / "user_summary.csv").is_file())
++            self.assertTrue((output / "source_failure_summary.csv").is_file())
++
++    def test_no_failures_creates_source_csv_with_header_only(self) -> None:
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            source = root / "events.log"
++            source.write_text(
++                "2026-08-01T10:00:00+00:00,alex-demo,SUCCESS,lab-pc-01\n",
++                encoding="utf-8",
++            )
++            output = root / "results"
++            with contextlib.redirect_stdout(io.StringIO()):
++                code = main([str(source), "--output-dir", str(output)])
++            self.assertEqual(0, code)
++            self.assertEqual(
++                "source,failed_logins\n",
++                (output / "source_failure_summary.csv").read_text(encoding="utf-8"),
++            )
+ 
+ 
+ if __name__ == "__main__":
+     unittest.main()
+-

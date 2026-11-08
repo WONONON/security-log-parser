@@ -1,0 +1,49 @@
+$ python3 -m unittest discover -s tests -v
+test_below_threshold_is_not_detected (test_analysis.AnalysisTests) ... ok
+test_counts_success_and_failure_by_user (test_analysis.AnalysisTests) ... ok
+test_exact_time_boundary_is_inclusive (test_analysis.AnalysisTests) ... ok
+test_invalid_configuration_is_rejected (test_analysis.AnalysisTests) ... ok
+test_just_outside_time_boundary_is_excluded (test_analysis.AnalysisTests) ... ok
+test_out_of_order_events_are_sorted (test_analysis.AnalysisTests) ... ok
+test_source_failures_combine_multiple_users (test_analysis.AnalysisTests) ... ok
+test_source_summary_excludes_successes (test_analysis.AnalysisTests) ... ok
+test_source_summary_is_empty_when_there_are_no_failures (test_analysis.AnalysisTests) ... ok
+test_threshold_is_detected (test_analysis.AnalysisTests) ... ok
+test_exports_json_and_csv (test_cli.CliTests) ... ok
+test_missing_input_returns_error_code (test_cli.CliTests) ... ok
+test_no_failures_creates_source_csv_with_header_only (test_cli.CliTests) ... ok
+test_empty_input (test_parser.ParserTests) ... ok
+test_malformed_lines_are_skipped_and_reported (test_parser.ParserTests) ... ok
+test_missing_file_raises_file_not_found (test_parser.ParserTests) ... ok
+test_naive_timestamp_is_rejected (test_parser.ParserTests) ... ok
+test_normal_input (test_parser.ParserTests) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.004s
+
+OK
+
+$ python3 -m security_log_parser data/sample_login.log --output-dir results --threshold 3 --window-minutes 10
+warning: line 10: expected 4 fields, found 1
+warning: line 11: status must be SUCCESS or FAILURE
+Security Log Parser
+Input: data/sample_login.log
+Valid events: 8
+Successful logins: 2
+Failed logins: 6
+Failures by user:
+  alex-demo: 1
+  blair-demo: 2
+  casey-demo: 0
+  sentinel-demo: 3
+Failures by source:
+  training-laptop-01: 1
+  training-laptop-02: 2
+  training-laptop-04: 2
+  training-laptop-05: 1
+Repeated failures: threshold=3, window=10 minutes (inclusive boundary)
+  ALERT sentinel-demo: 3 failures from 2026-08-01T09:10:00+10:00 to 2026-08-01T09:20:00+10:00
+Malformed lines skipped: 2
+JSON: results/analysis.json
+User CSV: results/user_summary.csv
+Source CSV: results/source_failure_summary.csv
