@@ -201,28 +201,3 @@ Security-Log-Parser/
 ├── README.md               setup, use, evidence and limitations
 └── pyproject.toml          project metadata and Python requirement
 ```
-
-## Student modification exercises
-
-These tasks are intentionally not completed. They allow Dongwoo to create genuine personal evidence and Git history.
-
-1. Add a `--status-case-sensitive` option. Write tests for both default and strict behavior, then explain the usability and compatibility trade-off.
-2. Add a per-source failure summary to the JSON and CSV reports. Develop the change on a Git branch and include a test for one source used by two users.
-3. Add a `--redact-usernames` option that replaces usernames with stable SHA-256-based aliases. Explain why hashing alone may still allow guessing and why a protected salt would matter for real data.
-
-## Comprehension questions
-
-1. Why does the parser require a UTC offset in every timestamp?
-2. What line in the sliding-window logic makes the 10-minute boundary inclusive?
-3. Why are malformed lines reported instead of silently ignored?
-4. How does the code avoid detecting successful logins as repeated failures?
-5. What is the difference between the threshold and the time window?
-6. Why can a passing test suite still be insufficient evidence that the program is correct?
-7. What does exit status 2 communicate to a shell script?
-8. Which files should be inspected before a Git commit, and why?
-9. What sensitive information could appear in real authentication logs even when passwords are absent?
-10. Which limitation would you address first for a large production log, and what design would you consider?
-
-## AI contribution disclosure
-
-OpenAI Codex created the initial source code, tests, sample data, documentation, evidence captures, and report structure in this package, and ran the recorded verification commands. Dongwoo Won must review the work, run it independently, complete personal reflection prompts from real experience, and clearly identify any student-authored modifications. The package does not claim that Dongwoo completed the 43030 module, spent the planned hours, authored the initial code, or personally performed the recorded AI-run commands.
