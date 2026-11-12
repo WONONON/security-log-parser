@@ -179,15 +179,7 @@ For an interactive inspection, add a temporary breakpoint such as `breakpoint()`
 - Production authentication logs may contain personal or security-sensitive information. Store them with restricted permissions, minimise retained fields, follow the relevant privacy and retention rules, and avoid committing them to Git.
 - Review malformed-line content before sharing it because a real rejected record might still contain sensitive data.
 
-## Limitations
 
-- The tool processes a local text file in memory and is not designed for large or continuous log streams.
-- It recognises one CSV schema and two status values; it does not parse operating-system or vendor-specific formats.
-- Detection is per user. It does not combine activity by source, IP address, device, or account group.
-- It reports the first qualifying window per user, not every overlapping window.
-- It does not verify whether timestamps are trustworthy or normalise user aliases.
-- The alert is a learning example, not proof of an attack and not a replacement for a monitored security platform.
-- Output files are not encrypted and existing files with the same names are overwritten.
 
 ## Project structure
 
@@ -202,27 +194,3 @@ Security-Log-Parser/
 └── pyproject.toml          project metadata and Python requirement
 ```
 
-## Student modification exercises
-
-These tasks are intentionally not completed. They allow Dongwoo to create genuine personal evidence and Git history.
-
-1. Add a `--status-case-sensitive` option. Write tests for both default and strict behavior, then explain the usability and compatibility trade-off.
-2. Add a per-source failure summary to the JSON and CSV reports. Develop the change on a Git branch and include a test for one source used by two users.
-3. Add a `--redact-usernames` option that replaces usernames with stable SHA-256-based aliases. Explain why hashing alone may still allow guessing and why a protected salt would matter for real data.
-
-## Comprehension questions
-
-1. Why does the parser require a UTC offset in every timestamp?
-2. What line in the sliding-window logic makes the 10-minute boundary inclusive?
-3. Why are malformed lines reported instead of silently ignored?
-4. How does the code avoid detecting successful logins as repeated failures?
-5. What is the difference between the threshold and the time window?
-6. Why can a passing test suite still be insufficient evidence that the program is correct?
-7. What does exit status 2 communicate to a shell script?
-8. Which files should be inspected before a Git commit, and why?
-9. What sensitive information could appear in real authentication logs even when passwords are absent?
-10. Which limitation would you address first for a large production log, and what design would you consider?
-
-## AI contribution disclosure
-
-OpenAI Codex produced the initial source code, tests, sample data, documentation, evidence captures, report structure, and recorded verification runs. Dongwoo Won must independently review and verify the material, complete personal reflections from real experience, and identify student-authored changes accurately.
