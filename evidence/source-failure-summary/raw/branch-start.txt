@@ -1,8 +1,0 @@
-$ git status --short --branch
-## feature/source-failure-summary
-?? evidence/source-failure-summary/raw/branch-start.txt
-$ git log -1 --format=%h%n%ad%n%an%n%s --date=iso-strict
-77a6d8b
-2026-11-08T21:30:28+11:00
-WONONON
-Record verified baseline before source summary

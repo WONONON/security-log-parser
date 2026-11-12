@@ -8,19 +8,6 @@ from pathlib import Path
 
 from .models import ParseWarning
 
-SPREADSHEET_FORMULA_PREFIXES = ("=", "+", "-", "@")
-
-
-def _safe_csv_value(value: object) -> object:
-    """Prevent spreadsheet applications from interpreting text as a formula."""
-    if isinstance(value, str) and value.startswith(SPREADSHEET_FORMULA_PREFIXES):
-        return "'" + value
-    return value
-
-
-def _safe_csv_row(row: dict[str, object]) -> dict[str, object]:
-    return {key: _safe_csv_value(value) for key, value in row.items()}
-
 
 def export_json(
     result: dict[str, object], warnings: list[ParseWarning], output_path: Path
@@ -54,19 +41,10 @@ def export_csv(result: dict[str, object], output_path: Path) -> None:
             user = str(row["user"])
             alert = alerts.get(user, {})
             writer.writerow(
-                _safe_csv_row({
+                {
                     **row,
                     "window_start": alert.get("window_start", ""),
                     "window_end": alert.get("window_end", ""),
-                })
+                }
             )
 
-
-def export_source_csv(result: dict[str, object], output_path: Path) -> None:
-    """Write one row for each source that has at least one failed login."""
-    fieldnames = ["source", "failed_logins"]
-    with output_path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in result["sources"]:  # type: ignore[assignment]
-            writer.writerow(_safe_csv_row(row))
