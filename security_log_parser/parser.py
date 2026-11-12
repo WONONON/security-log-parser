@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import TextIO
@@ -10,7 +11,16 @@ from typing import TextIO
 from .models import LoginEvent, ParseWarning
 
 EXPECTED_FIELDS = 4
+MAX_IDENTIFIER_LENGTH = 128
 VALID_STATUSES = {"SUCCESS", "FAILURE"}
+
+
+def _identifier_error(value: str, label: str) -> str | None:
+    if len(value) > MAX_IDENTIFIER_LENGTH:
+        return f"{label} must be at most {MAX_IDENTIFIER_LENGTH} characters"
+    if any(unicodedata.category(character) in {"Cc", "Cf"} for character in value):
+        return f"{label} must not contain control or formatting characters"
+    return None
 
 
 def parse_stream(stream: TextIO) -> tuple[list[LoginEvent], list[ParseWarning]]:
@@ -53,6 +63,13 @@ def parse_stream(stream: TextIO) -> tuple[list[LoginEvent], list[ParseWarning]]:
             warnings.append(ParseWarning(line_number, "user and source must not be empty", content))
             continue
 
+        identifier_error = _identifier_error(user, "user") or _identifier_error(
+            source, "source"
+        )
+        if identifier_error:
+            warnings.append(ParseWarning(line_number, identifier_error, content))
+            continue
+
         status = status.upper()
         if status not in VALID_STATUSES:
             warnings.append(
@@ -83,4 +100,3 @@ def read_log(path: str | Path) -> tuple[list[LoginEvent], list[ParseWarning]]:
     """
     with Path(path).open("r", encoding="utf-8", newline="") as stream:
         return parse_stream(stream)
-

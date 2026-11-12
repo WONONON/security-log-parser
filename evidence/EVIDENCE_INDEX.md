@@ -20,6 +20,7 @@ The separate Software Development Tools module guide was not supplied. Module-sp
 | Numbered captures | `evidence/screenshots/` | Visual evidence derived from the recorded command runs |
 | Instructions | `README.md` | Setup, commands, expected output, Git workflow, limitations and safe data handling |
 | Portfolio report | `report/` | Goal 3 linkage, results, limitations, disclosure and reflection prompts |
+| Source failure feature evidence | `evidence/source-failure-summary/` | Baseline, branch, diff, tests, execution output, generated reports, screenshots and commit records |
 
 ## Claims deliberately not made
 
@@ -28,4 +29,3 @@ The separate Software Development Tools module guide was not supplied. Module-sp
 - No 43030 module completion was claimed.
 - No personal reflection was invented.
 - No real authentication or personal data was used.
-
