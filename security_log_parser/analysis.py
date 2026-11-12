@@ -54,9 +54,6 @@ def analyse_events(
     """Build the serialisable analysis result."""
     successes = Counter(event.user for event in events if event.status == "SUCCESS")
     failures = Counter(event.user for event in events if event.status == "FAILURE")
-    failures_by_source = Counter(
-        event.source for event in events if event.status == "FAILURE"
-    )
     users = sorted(successes.keys() | failures.keys())
     alerts = detect_repeated_failures(events, threshold, window_minutes)
     alert_by_user = {str(alert["user"]): alert for alert in alerts}
@@ -82,12 +79,6 @@ def analyse_events(
             }
             for user in users
         ],
-        "sources": [
-            {
-                "source": source,
-                "failed_logins": failures_by_source[source],
-            }
-            for source in sorted(failures_by_source)
-        ],
         "alerts": alerts,
     }
+

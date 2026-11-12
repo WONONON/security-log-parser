@@ -1,2 +1,0 @@
-error: input file not found: data/missing.log
-Exit status: 2

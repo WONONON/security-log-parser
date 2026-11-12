@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from .analysis import analyse_events
-from .exporters import export_csv, export_json, export_source_csv
+from .exporters import export_csv, export_json
 from .parser import read_log
 
 
@@ -54,10 +54,8 @@ def main(argv: list[str] | None = None) -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     json_path = args.output_dir / "analysis.json"
     csv_path = args.output_dir / "user_summary.csv"
-    source_csv_path = args.output_dir / "source_failure_summary.csv"
     export_json(result, warnings, json_path)
     export_csv(result, csv_path)
-    export_source_csv(result, source_csv_path)
 
     summary = result["summary"]
     print("Security Log Parser")
@@ -70,13 +68,6 @@ def main(argv: list[str] | None = None) -> int:
     if users:
         for row in users:
             print(f"  {row['user']}: {row['failed_logins']}")
-    else:
-        print("  none")
-    print("Failures by source:")
-    sources = result["sources"]
-    if sources:
-        for row in sources:
-            print(f"  {row['source']}: {row['failed_logins']}")
     else:
         print("  none")
     print(
@@ -98,6 +89,6 @@ def main(argv: list[str] | None = None) -> int:
             f"warning: line {warning.line_number}: {warning.message}", file=sys.stderr
         )
     print(f"JSON: {json_path}")
-    print(f"User CSV: {csv_path}")
-    print(f"Source CSV: {source_csv_path}")
+    print(f"CSV: {csv_path}")
     return 0
+
