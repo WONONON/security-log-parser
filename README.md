@@ -39,7 +39,7 @@ timestamp,user,status,source
 - `status`: `SUCCESS` or `FAILURE`, case-insensitive
 - `source`: fictional device or source identifier
 
-Blank lines and lines beginning with `#` are ignored. Malformed lines are skipped and reported. The sample file contains fictional labels only; it has no real personal or production data.
+User and source identifiers are limited to 128 characters and may not contain control or Unicode formatting characters. These checks prevent untrusted identifiers from injecting terminal control sequences or creating excessive report fields. Blank lines and lines beginning with `#` are ignored. Malformed lines are skipped and reported. The sample file contains fictional labels only; it has no real personal or production data.
 
 ## Run the parser
 
@@ -102,7 +102,7 @@ training-laptop-05,1
 python3 -m unittest discover -s tests -v
 ```
 
-The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, invalid configuration, one source shared by multiple users, exclusion of successful logins from source counts, and an input with no failures.
+The suite covers normal input, empty input, malformed records, missing files, JSON/CSV export, threshold behavior, the exact inclusive boundary, a just-outside boundary, out-of-order events, invalid configuration, one source shared by multiple users, exclusion of successful logins from source counts, an input with no failures, identifier length and control-character validation, and spreadsheet formula escaping.
 
 Expected final line:
 
@@ -192,6 +192,8 @@ For an interactive inspection, add a temporary breakpoint such as `breakpoint()`
 ## Design and secure data handling
 
 - The parser accepts only the documented field count, statuses, and timezone-aware timestamps.
+- User and source identifiers are length-limited and reject terminal control and Unicode formatting characters.
+- CSV text beginning with `=`, `+`, `-`, or `@` is prefixed with an apostrophe so spreadsheet applications treat it as text instead of a formula.
 - Malformed records do not stop valid records from being analysed; each skipped line is reported.
 - Output paths are controlled by the command-line argument. Existing report files with the same names are replaced.
 - The code never executes input text and does not use `eval`, shell interpolation, network calls, or third-party dependencies.

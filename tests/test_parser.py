@@ -50,7 +50,26 @@ class ParserTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 read_log(missing)
 
+    def test_identifier_length_limit_is_enforced(self) -> None:
+        oversized_user = "u" * 129
+        events, warnings = parse_stream(
+            io.StringIO(
+                f"2026-08-01T10:00:00+10:00,{oversized_user},FAILURE,lab-pc-01\n"
+            )
+        )
+        self.assertEqual([], events)
+        self.assertIn("at most 128 characters", warnings[0].message)
+
+    def test_control_characters_in_identifiers_are_rejected(self) -> None:
+        events, warnings = parse_stream(
+            io.StringIO(
+                "2026-08-01T10:00:00+10:00,alex-demo,FAILURE,"
+                "lab-pc-01\x1b[31m\n"
+            )
+        )
+        self.assertEqual([], events)
+        self.assertIn("control or formatting characters", warnings[0].message)
+
 
 if __name__ == "__main__":
     unittest.main()
-

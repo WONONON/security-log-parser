@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import csv
 import io
 import tempfile
 import unittest
@@ -49,6 +50,31 @@ class CliTests(unittest.TestCase):
                 "source,failed_logins\n",
                 (output / "source_failure_summary.csv").read_text(encoding="utf-8"),
             )
+
+    def test_csv_exports_escape_spreadsheet_formula_prefixes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "events.log"
+            source.write_text(
+                "2026-08-01T10:00:00+00:00,=demo-user,FAILURE,+lab-pc-01\n",
+                encoding="utf-8",
+            )
+            output = root / "results"
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = main([str(source), "--output-dir", str(output)])
+
+            self.assertEqual(0, code)
+            with (output / "user_summary.csv").open(
+                encoding="utf-8", newline=""
+            ) as stream:
+                user_row = next(csv.DictReader(stream))
+            with (output / "source_failure_summary.csv").open(
+                encoding="utf-8", newline=""
+            ) as stream:
+                source_row = next(csv.DictReader(stream))
+
+            self.assertEqual("'=demo-user", user_row["user"])
+            self.assertEqual("'+lab-pc-01", source_row["source"])
 
 
 if __name__ == "__main__":
